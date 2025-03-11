@@ -1,11 +1,11 @@
-//±ÜÕÏ²ÉÓÃµÄÊÇÔ²×¶£¬ÈôÏë±£³Ö·É»ú³¯Ïò£¬¿ÉÒÔ²Î¿¼collision_avoidance_gama.cppÀïµÄ±ÜÕÏËã·¨£¬×¢Òâ¸ü¸Ä±äÁ¿Command_now.yaw_sp
-//ÊÓ¾õÄ£¿éÈ±Ê§
+//é¿éšœé‡‡ç”¨çš„æ˜¯åœ†é”¥ï¼Œè‹¥æƒ³ä¿æŒé£æœºæœå‘ï¼Œå¯ä»¥å‚è€ƒcollision_avoidance_gama.cppé‡Œçš„é¿éšœç®—æ³•ï¼Œæ³¨æ„æ›´æ”¹å˜é‡Command_now.yaw_sp
+//è§†è§‰æ¨¡å—ç¼ºå¤±
 
 
 
 #include <ros/ros.h>
 
-//topic Í·ÎÄ¼ş
+//topic å¤´æ–‡ä»¶
 #include <iostream>
 #include <px4_command/command.h>
 #include <std_msgs/Bool.h>
@@ -17,7 +17,7 @@
 #include <math_utils.h>
 
 using namespace std;
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>È« ¾Ö ±ä Á¿<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>å…¨ å±€ å˜ é‡<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 enum Command
 {
     Move_ENU,
@@ -30,14 +30,14 @@ enum Command
     Failsafe_land,
     Idle
 };
-//--------------------------------------------ÊäÈë--------------------------------------------------
-sensor_msgs::LaserScan Laser;                                   //¼¤¹âÀ×´ïµãÔÆÊı¾İ
-geometry_msgs::PoseStamped pos_drone;                                  //ÎŞÈË»úµ±Ç°Î»ÖÃ
+//--------------------------------------------è¾“å…¥--------------------------------------------------
+sensor_msgs::LaserScan Laser;                                   //æ¿€å…‰é›·è¾¾ç‚¹äº‘æ•°æ®
+geometry_msgs::PoseStamped pos_drone;                                  //æ— äººæœºå½“å‰ä½ç½®
 Eigen::Quaterniond q_fcu;
 Eigen::Vector3d Euler_fcu;
 float sleep_time;
-float target_x;                                                 //ÆÚÍûÎ»ÖÃ_x
-float target_y;                                                 //ÆÚÍûÎ»ÖÃ_y
+float target_x;                                                 //æœŸæœ›ä½ç½®_x
+float target_y;                                                 //æœŸæœ›ä½ç½®_y
 float x_1;
 float y_1;
 float x_2;
@@ -46,41 +46,41 @@ float x_3;
 float y_3;
 float x_4;
 float y_4;
-int range_min;                                                //¼¤¹âÀ×´ïÌ½²â·¶Î§ ×îĞ¡½Ç¶È
-int range_max;                                                //¼¤¹âÀ×´ïÌ½²â·¶Î§ ×î´ó½Ç¶È
+int range_min;                                                //æ¿€å…‰é›·è¾¾æ¢æµ‹èŒƒå›´ æœ€å°è§’åº¦
+int range_max;                                                //æ¿€å…‰é›·è¾¾æ¢æµ‹èŒƒå›´ æœ€å¤§è§’åº¦
 float last_time = 0;
 float fly_height;
-//--------------------------------------------Ëã·¨Ïà¹Ø--------------------------------------------------
+//--------------------------------------------ç®—æ³•ç›¸å…³--------------------------------------------------
 float abs_distance;
 float track_angle;
 float avoid_angle;
-float yaw_angle;                                                 //Æ«º½½Ç
-float R_outside, R_inside;                                       //°²È«°ë¾¶ [±ÜÕÏËã·¨Ïà¹Ø²ÎÊı]
-float distance_c, angle_c=10;                                       //×î½üÕÏ°­Îï¾àÀë ½Ç¶È
-float top_angle;                                                 //Ô²×¶¶¥½ÇµÄÒ»°ë
-float p_xy;                                                     //×·×Ù²¿·ÖÎ»ÖÃ»·P
-float vel_track;                                             //×·×Ù²¿·ÖËÙ¶È
-int flag_land;                                                  //½µÂä±êÖ¾Î»
-//--------------------------------------------Êä³ö--------------------------------------------------
-std_msgs::Bool flag_collision_avoidance;                        //ÊÇ·ñ½øÈë±ÜÕÏÄ£Ê½±êÖ¾Î»
-float vel_sp_ENU[2];                                            //ENUÏÂµÄ×ÜËÙ¶È
-float vel_sp_max;                                               //×ÜËÙ¶ÈÏŞ·ù
-px4_command::command Command_now;                               //·¢ËÍ¸øposition_control.cppµÄÃüÁî
-int hold_flag;                                                  //ÊÇ·ñÍê³ÉĞüÍ£
-int point_1_flag;                                               //ÊÇ·ñµ½´ïÄ¿±êµã±êÖ¾
+float yaw_angle;                                                 //åèˆªè§’
+float R_outside, R_inside;                                       //å®‰å…¨åŠå¾„ [é¿éšœç®—æ³•ç›¸å…³å‚æ•°]
+float distance_c, angle_c=10;                                       //æœ€è¿‘éšœç¢ç‰©è·ç¦» è§’åº¦
+float top_angle;                                                 //åœ†é”¥é¡¶è§’çš„ä¸€åŠ
+float p_xy;                                                     //è¿½è¸ªéƒ¨åˆ†ä½ç½®ç¯P
+float vel_track;                                             //è¿½è¸ªéƒ¨åˆ†é€Ÿåº¦
+int flag_land;                                                  //é™è½æ ‡å¿—ä½
+//--------------------------------------------è¾“å‡º--------------------------------------------------
+std_msgs::Bool flag_collision_avoidance;                        //æ˜¯å¦è¿›å…¥é¿éšœæ¨¡å¼æ ‡å¿—ä½
+float vel_sp_ENU[2];                                            //ENUä¸‹çš„æ€»é€Ÿåº¦
+float vel_sp_max;                                               //æ€»é€Ÿåº¦é™å¹…
+px4_command::command Command_now;                               //å‘é€ç»™position_control.cppçš„å‘½ä»¤
+int hold_flag;                                                  //æ˜¯å¦å®Œæˆæ‚¬åœ
+int point_1_flag;                                               //æ˜¯å¦åˆ°è¾¾ç›®æ ‡ç‚¹æ ‡å¿—
 int turn_flag;
 int point_2_flag;
 int point_3_flag;
 int point_4_flag;
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Éù Ã÷ º¯ Êı<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>å£° æ˜ å‡½ æ•°<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 void turn();
 void cal_min_distance();
 float satfunc(float data, float Max);
-void printf();                                                                       //´òÓ¡º¯Êı
-void printf_param();                                                                 //´òÓ¡¸÷Ïî²ÎÊıÒÔ¹©¼ì²é
+void printf();                                                                       //æ‰“å°å‡½æ•°
+void printf_param();                                                                 //æ‰“å°å„é¡¹å‚æ•°ä»¥ä¾›æ£€æŸ¥
 void collision_avoidance(float target_x, float target_y);
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>»Ø µ÷ º¯ Êı<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-//½ÓÊÕÀ×´ïµÄÊı¾İ£¬²¢×öÏàÓ¦´¦Àí,È»ºó¼ÆËãÇ°ºó×óÓÒËÄÏò×îĞ¡¾àÀë
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>å› è°ƒ å‡½ æ•°<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//æ¥æ”¶é›·è¾¾çš„æ•°æ®ï¼Œå¹¶åšç›¸åº”å¤„ç†,ç„¶åè®¡ç®—å‰åå·¦å³å››å‘æœ€å°è·ç¦»
 void lidar_cb(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
 
@@ -104,12 +104,12 @@ void lidar_cb(const sensor_msgs::LaserScan::ConstPtr& scan)
     int count;    //count = 359
     count = Laser.ranges.size();
 
-    //ÌŞ³ıinfµÄÇé¿ö
+    //å‰”é™¤infçš„æƒ…å†µ
     for (int i = 0; i < count; i++)
     {
-        //ÅĞ¶ÏÊÇ·ñÎªinf
+        //åˆ¤æ–­æ˜¯å¦ä¸ºinf
         int a = isinf(Laser_tmp.ranges[i]);
-        //Èç¹ûÎªinf£¬Ôò¸³ÖµÉÏÒ»½Ç¶ÈµÄÖµ
+        //å¦‚æœä¸ºinfï¼Œåˆ™èµ‹å€¼ä¸Šä¸€è§’åº¦çš„å€¼
         if (a == 1)
         {
             if (i == 0)
@@ -129,7 +129,7 @@ void lidar_cb(const sensor_msgs::LaserScan::ConstPtr& scan)
         //cout<<"tmp: "<<i<<" l:"<<Laser_tmp.ranges[i]<<"|| Laser: "<<Laser.ranges[i]<<endl;
     }
     //cout<<"//////////////"<<endl;
-    //¼ÆËãÇ°ºó×óÓÒËÄÏò×îĞ¡¾àÀë
+    //è®¡ç®—å‰åå·¦å³å››å‘æœ€å°è·ç¦»
     cal_min_distance();
 }
 
@@ -144,22 +144,22 @@ void pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
     yaw_angle = Euler_fcu[2] / M_PI * 180.0;
 }
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Ö÷ º¯ Êı<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>ä¸» å‡½ æ•°<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "collision_avoidance");
     ros::NodeHandle nh("~");
-    // ÆµÂÊ [20Hz]
+    // é¢‘ç‡ [20Hz]
     ros::Rate rate(20.0);
-    //¡¾¶©ÔÄ¡¿LidarÊı¾İ
+    //ã€è®¢é˜…ã€‘Lidaræ•°æ®
     ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/laser/scan", 1000, lidar_cb);
     //ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/scan", 1000, lidar_cb);
-    //¡¾¶©ÔÄ¡¿ÎŞÈË»úµ±Ç°Î»ÖÃ ×ø±êÏµ NEDÏµ
+    //ã€è®¢é˜…ã€‘æ— äººæœºå½“å‰ä½ç½® åæ ‡ç³» NEDç³»
     ros::Subscriber position_sub = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 100, pos_cb);
-    // ¡¾·¢²¼¡¿·¢ËÍ¸øposition_control.cppµÄÃüÁî
+    // ã€å‘å¸ƒã€‘å‘é€ç»™position_control.cppçš„å‘½ä»¤
     ros::Publisher command_pub = nh.advertise<px4_command::command>("/px4/command", 10);
 
-    //¶ÁÈ¡²ÎÊı±íÖĞµÄ²ÎÊı
+    //è¯»å–å‚æ•°è¡¨ä¸­çš„å‚æ•°
     nh.param<float>("sleep_time", sleep_time, 100.0);
 
     nh.param<float>("x_1", x_1, 6.0);
@@ -186,13 +186,13 @@ int main(int argc, char** argv)
     nh.getParam("fly_height", fly_height);
 
 
-    //´òÓ¡ÏÖÊµ¼ì²é²ÎÊı
+    //æ‰“å°ç°å®æ£€æŸ¥å‚æ•°
     printf_param();
 
     //check paramater
     int check_flag;
-    //ÊäÈë1,¼ÌĞø£¬ÆäËû£¬ÍË³ö³ÌĞò
-    cout << "Please check the parameter and setting£¬1 for go on£¬ else for quit: " << endl;
+    //è¾“å…¥1,ç»§ç»­ï¼Œå…¶ä»–ï¼Œé€€å‡ºç¨‹åº
+    cout << "Please check the parameter and settingï¼Œ1 for go onï¼Œ else for quit: " << endl;
     cin >> check_flag;
     if (check_flag != 1) return -1;
 
@@ -243,7 +243,7 @@ int main(int argc, char** argv)
     }
     hold_flag = 1;
 
-    //³õÖµ
+    //åˆå€¼
     track_angle = 0;
 
     vel_track = 0;
@@ -256,19 +256,19 @@ int main(int argc, char** argv)
         
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Main Loop<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
-    //µ½µÚÒ»¸öµã
+    //åˆ°ç¬¬ä¸€ä¸ªç‚¹
     target_x = x_1;
     target_y = y_1;
     point_1_flag = 0;
     abs_distance = sqrt((pos_drone.pose.position.x - target_x) * (pos_drone.pose.position.x - target_x) + (pos_drone.pose.position.y - target_y) * (pos_drone.pose.position.y - target_y));
     while (ros::ok() && abs_distance > 0.1)
     {
-        //»Øµ÷Ò»´Î ¸üĞÂ´«¸ĞÆ÷×´Ì¬
+        //å›è°ƒä¸€æ¬¡ æ›´æ–°ä¼ æ„Ÿå™¨çŠ¶æ€
         ros::spinOnce();
 
-        Command_now.command = Move_ENU;     //»úÌåÏµÏÂÒÆ¶¯
+        Command_now.command = Move_ENU;     //æœºä½“ç³»ä¸‹ç§»åŠ¨
 
-        Command_now.sub_mode = 0;//µÚÒ»¶Î²ÉÓÃ¾àÀë¿ØÖÆ
+        Command_now.sub_mode = 0;//ç¬¬ä¸€æ®µé‡‡ç”¨è·ç¦»æ§åˆ¶
         Command_now.pos_sp[0] = target_x;
         Command_now.pos_sp[1] = target_y;
         Command_now.pos_sp[2] = fly_height;
@@ -281,7 +281,7 @@ int main(int argc, char** argv)
 
         if (flag_land == 1) Command_now.command = Land;
         command_pub.publish(Command_now);
-        //´òÓ¡
+        //æ‰“å°
         printf();
         rate.sleep();
     }
@@ -289,13 +289,13 @@ int main(int argc, char** argv)
     printf();
 
 
-    //Ğı×ª
+    //æ—‹è½¬
     turn_flag = 0;
     while (ros::ok() && abs(yaw_angle + 90) > 3)
     {
         ros::spinOnce();
         Command_now.command = Move_ENU;
-        //ÎªÁËÈ·±£Ğı×ª¹ı³ÌÖĞ²»Æ«ÀëÄ¿±êµã£¬ÕâÀï¼ÌĞø¿ØÖÆ
+        //ä¸ºäº†ç¡®ä¿æ—‹è½¬è¿‡ç¨‹ä¸­ä¸åç¦»ç›®æ ‡ç‚¹ï¼Œè¿™é‡Œç»§ç»­æ§åˆ¶
         Command_now.sub_mode = 0;
         Command_now.pos_sp[0] = target_x;
         Command_now.pos_sp[1] = target_y;
@@ -312,7 +312,7 @@ int main(int argc, char** argv)
 
         if (flag_land == 1) Command_now.command = Land;
         command_pub.publish(Command_now);
-        //´òÓ¡
+        //æ‰“å°
         printf();
         rate.sleep();
     }
@@ -321,17 +321,17 @@ int main(int argc, char** argv)
     
     
 
-    //ÏÂÃæÈ¥µÚ¶ş¸öµã
+    //ä¸‹é¢å»ç¬¬äºŒä¸ªç‚¹
     target_x = x_2;
     target_y = y_2;
     point_2_flag = 0;
     abs_distance = sqrt((pos_drone.pose.position.x - target_x) * (pos_drone.pose.position.x - target_x) + (pos_drone.pose.position.y - target_y) * (pos_drone.pose.position.y - target_y));
     while (ros::ok() && abs_distance > 0.1)
     {
-        //»Øµ÷Ò»´Î ¸üĞÂ´«¸ĞÆ÷×´Ì¬
+        //å›è°ƒä¸€æ¬¡ æ›´æ–°ä¼ æ„Ÿå™¨çŠ¶æ€
         ros::spinOnce();
 
-        Command_now.command = Move_ENU;     //»úÌåÏµÏÂÒÆ¶¯
+        Command_now.command = Move_ENU;     //æœºä½“ç³»ä¸‹ç§»åŠ¨
 
         Command_now.sub_mode = 0;
         Command_now.pos_sp[0] = target_x;
@@ -345,32 +345,32 @@ int main(int argc, char** argv)
 
         if (flag_land == 1) Command_now.command = Land;
         command_pub.publish(Command_now);
-        //´òÓ¡
+        //æ‰“å°
         printf();
         rate.sleep();
     }
     point_2_flag = 1;
     printf();
 
-    //ÏÂÃæÈ¥µÚÈı¸öµã
+    //ä¸‹é¢å»ç¬¬ä¸‰ä¸ªç‚¹
     target_x = x_3;
     target_y = y_3;
     point_3_flag = 0;
     abs_distance = sqrt((pos_drone.pose.position.x - target_x) * (pos_drone.pose.position.x - target_x) + (pos_drone.pose.position.y - target_y) * (pos_drone.pose.position.y - target_y));
     while (ros::ok() && abs_distance > 0.1)
     {
-        //»Øµ÷Ò»´Î ¸üĞÂ´«¸ĞÆ÷×´Ì¬
-        //¸üĞÂÀ×´ïµãÔÆÊı¾İ£¬´æ´¢ÔÚLaserÖĞ,²¢¼ÆËãËÄÏò×îĞ¡¾àÀë
+        //å›è°ƒä¸€æ¬¡ æ›´æ–°ä¼ æ„Ÿå™¨çŠ¶æ€
+        //æ›´æ–°é›·è¾¾ç‚¹äº‘æ•°æ®ï¼Œå­˜å‚¨åœ¨Laserä¸­,å¹¶è®¡ç®—å››å‘æœ€å°è·ç¦»
         ros::spinOnce();
       
-        //if (abs_distance > 0.3)//ÎªÁË½â¾ö·É»úÔÚÄ¿±êÖÜÎ§×ªÈ¦
+        //if (abs_distance > 0.3)//ä¸ºäº†è§£å†³é£æœºåœ¨ç›®æ ‡å‘¨å›´è½¬åœˆ
         
         collision_avoidance(target_x, target_y);
 
-        Command_now.command = Move_ENU;     //»úÌåÏµÏÂÒÆ¶¯
+        Command_now.command = Move_ENU;     //æœºä½“ç³»ä¸‹ç§»åŠ¨
         Command_now.comid = comid;
         comid++;
-        Command_now.sub_mode = 2; // xy ËÙ¶È¿ØÖÆÄ£Ê½ z Î»ÖÃ¿ØÖÆÄ£Ê½
+        Command_now.sub_mode = 2; // xy é€Ÿåº¦æ§åˆ¶æ¨¡å¼ z ä½ç½®æ§åˆ¶æ¨¡å¼
         Command_now.vel_sp[0] = vel_sp_ENU[0];
         Command_now.vel_sp[1] = vel_sp_ENU[1];  //ENU frame
         Command_now.pos_sp[2] = fly_height;
@@ -381,31 +381,31 @@ int main(int argc, char** argv)
 
         if (flag_land == 1) Command_now.command = Land;
         command_pub.publish(Command_now);
-        //´òÓ¡
+        //æ‰“å°
         printf();
         rate.sleep();
     }
     point_3_flag = 1;
     printf();
 
-    //ÏÂÃæÈ¥µÚËÄ¸öµã
+    //ä¸‹é¢å»ç¬¬å››ä¸ªç‚¹
     target_x = x_4;
     target_y = y_4;
     point_4_flag = 0;
     abs_distance = sqrt((pos_drone.pose.position.x - target_x) * (pos_drone.pose.position.x - target_x) + (pos_drone.pose.position.y - target_y) * (pos_drone.pose.position.y - target_y));
     while (ros::ok() && abs_distance > 0.1)
     {
-        //»Øµ÷Ò»´Î ¸üĞÂ´«¸ĞÆ÷×´Ì¬
-        //¸üĞÂÀ×´ïµãÔÆÊı¾İ£¬´æ´¢ÔÚLaserÖĞ,²¢¼ÆËãËÄÏò×îĞ¡¾àÀë
+        //å›è°ƒä¸€æ¬¡ æ›´æ–°ä¼ æ„Ÿå™¨çŠ¶æ€
+        //æ›´æ–°é›·è¾¾ç‚¹äº‘æ•°æ®ï¼Œå­˜å‚¨åœ¨Laserä¸­,å¹¶è®¡ç®—å››å‘æœ€å°è·ç¦»
         ros::spinOnce();
 
         //if (abs_distance > 0.3)
         collision_avoidance(target_x, target_y);
 
-        Command_now.command = Move_ENU;     //»úÌåÏµÏÂÒÆ¶¯
+        Command_now.command = Move_ENU;     //æœºä½“ç³»ä¸‹ç§»åŠ¨
         Command_now.comid = comid;
         comid++;
-        Command_now.sub_mode = 2; // xy ËÙ¶È¿ØÖÆÄ£Ê½ z Î»ÖÃ¿ØÖÆÄ£Ê½
+        Command_now.sub_mode = 2; // xy é€Ÿåº¦æ§åˆ¶æ¨¡å¼ z ä½ç½®æ§åˆ¶æ¨¡å¼
         Command_now.vel_sp[0] = vel_sp_ENU[0];
         Command_now.vel_sp[1] = vel_sp_ENU[1];  //ENU frame
         Command_now.pos_sp[2] = fly_height;
@@ -416,7 +416,7 @@ int main(int argc, char** argv)
        
         if (flag_land == 1) Command_now.command = Land;
         command_pub.publish(Command_now);
-        //´òÓ¡
+        //æ‰“å°
         printf();
         rate.sleep();
     }
@@ -424,7 +424,7 @@ int main(int argc, char** argv)
     printf();
 
 
-    //½µÂä
+    //é™è½
     flag_land = 1;
     Command_now.command = Land;
     while (ros::ok())
@@ -441,7 +441,7 @@ int main(int argc, char** argv)
 }
 
 
-//¼ÆËãÇ°ºó×óÓÒËÄÏò×îĞ¡¾àÀë
+//è®¡ç®—å‰åå·¦å³å››å‘æœ€å°è·ç¦»
 void cal_min_distance()
 {
     distance_c = Laser.ranges[range_min];
@@ -456,7 +456,7 @@ void cal_min_distance()
     }
 }
 
-//±¥ºÍº¯Êı
+//é¥±å’Œå‡½æ•°
 float satfunc(float data, float Max)
 {
     if (abs(data) > Max) return (data > 0) ? Max : -Max;
@@ -465,28 +465,28 @@ float satfunc(float data, float Max)
 
 void collision_avoidance(float target_x, float target_y)
 {
-    //¼ÆËã×·×Ù½Ç¶È
+    //è®¡ç®—è¿½è¸ªè§’åº¦
     track_angle = atan2((target_y - pos_drone.pose.position.y), (target_x - pos_drone.pose.position.x));
     if (track_angle < 0)
         track_angle = track_angle + 2 * M_PI;
-    track_angle = track_angle / M_PI * 180;//»¡¶È×ª½Ç¶È0-359.99
+    track_angle = track_angle / M_PI * 180;//å¼§åº¦è½¬è§’åº¦0-359.99
 
-    //avoid_angle³õÊ¼»¯
+    //avoid_angleåˆå§‹åŒ–
     avoid_angle = track_angle;
 
 
-    if (fabs(R_inside) <= fabs(distance_c))//Èç¹ûÕÏ°­ÎïÎ´½øÈëR_inside
+    if (fabs(R_inside) <= fabs(distance_c))//å¦‚æœéšœç¢ç‰©æœªè¿›å…¥R_inside
     {
-        //¼ÆËãÔ²×¶¶¥½ÇµÄÒ»°ë
+        //è®¡ç®—åœ†é”¥é¡¶è§’çš„ä¸€åŠ
         top_angle = asin(R_inside / distance_c) / M_PI * 180;
 
-        //ÅĞ¶ÏÕÏ°­ÎïÊÇ·ñµ±µÀ
+        //åˆ¤æ–­éšœç¢ç‰©æ˜¯å¦å½“é“
         bool Is_in = false;
         if (fabs(angle_c - 360) < top_angle || angle_c < top_angle)
             Is_in = true;
 
 
-        //¸ù¾İ×îĞ¡¾àÀëºÍÊÇ·ñµ±µÀÅĞ¶Ï£ºÊÇ·ñÆôÓÃ±ÜÕÏ²ßÂÔ
+        //æ ¹æ®æœ€å°è·ç¦»å’Œæ˜¯å¦å½“é“åˆ¤æ–­ï¼šæ˜¯å¦å¯ç”¨é¿éšœç­–ç•¥
         if (distance_c >= R_outside || !Is_in)
         {
             flag_collision_avoidance.data = false;
@@ -498,7 +498,7 @@ void collision_avoidance(float target_x, float target_y)
 
 
 
-        // ±ÜÕÏ²ßÂÔ
+        // é¿éšœç­–ç•¥
         if (flag_collision_avoidance.data == true)
         {
             if (angle_c < 180)
@@ -514,7 +514,7 @@ void collision_avoidance(float target_x, float target_y)
         }
 
     }
-    else if (distance_c != 0)//Èç¹û·É»úÒÑ¾­½øÈëR_inside£¬Éè·¨ÍË³öR_inside£¬²ÉÓÃ¸øÒ»¸öÏòºóµÄËÙ¶È´ïµ½É²³µµÄĞ§¹û£¬¾ßÌåÉ²³µĞ§¹ûÊÜ¶à·½ÒòËØÓ°Ïì£ºÖÜÎ§ÕÏ°­ÎïµÄÃÜ¼¯³Ì¶È¡¢·É»úµÄËÙ¶È¡¢·É»úµÄĞÔÄÜ¡£¡£¡£
+    else if (distance_c != 0)//å¦‚æœé£æœºå·²ç»è¿›å…¥R_insideï¼Œè®¾æ³•é€€å‡ºR_insideï¼Œé‡‡ç”¨ç»™ä¸€ä¸ªå‘åçš„é€Ÿåº¦è¾¾åˆ°åˆ¹è½¦çš„æ•ˆæœï¼Œå…·ä½“åˆ¹è½¦æ•ˆæœå—å¤šæ–¹å› ç´ å½±å“ï¼šå‘¨å›´éšœç¢ç‰©çš„å¯†é›†ç¨‹åº¦ã€é£æœºçš„é€Ÿåº¦ã€é£æœºçš„æ€§èƒ½ã€‚ã€‚ã€‚
     {
         avoid_angle = ((int)angle_c + 180) % 360;
         avoid_angle = (int)(yaw_angle + avoid_angle) % 360;
@@ -522,19 +522,19 @@ void collision_avoidance(float target_x, float target_y)
     else if (distance_c == 0)
         cout << "************WARNING*********" << endl;
 
-    //ÉÏÃæÈı´¦³¤¼ÆËãÊ½Ê×ÏÈ¼ÆËãÁË»úÌåÏµµÄ±ÜÕÏ½Ç£¬È»ºó×ªµ½ÊÀ½ç£¬¶à´ÎÈ¡ÓàÄ¿µÄÊÇÈ·±£½Ç¶ÈÔÚ0-359.99
+    //ä¸Šé¢ä¸‰å¤„é•¿è®¡ç®—å¼é¦–å…ˆè®¡ç®—äº†æœºä½“ç³»çš„é¿éšœè§’ï¼Œç„¶åè½¬åˆ°ä¸–ç•Œï¼Œå¤šæ¬¡å–ä½™ç›®çš„æ˜¯ç¡®ä¿è§’åº¦åœ¨0-359.99
 
 
 
-    //¼ÆËã×·×ÙËÙ¶È
+    //è®¡ç®—è¿½è¸ªé€Ÿåº¦
     vel_track = p_xy * sqrt((target_x - pos_drone.pose.position.x) * (target_x - pos_drone.pose.position.x) + (target_y - pos_drone.pose.position.y) * (target_y - pos_drone.pose.position.y));
 
-    //ËÙ¶ÈÏŞ·ù
+    //é€Ÿåº¦é™å¹…
     vel_track = satfunc(vel_track, vel_sp_max);
 
 
 
-    //¸ù¾İ×·×ÙËÙ¶ÈµÄ±ÜÕÏ½Ç¼ÆËãÊÀ½çÏµÏÂµÄËÙ¶È
+    //æ ¹æ®è¿½è¸ªé€Ÿåº¦çš„é¿éšœè§’è®¡ç®—ä¸–ç•Œç³»ä¸‹çš„é€Ÿåº¦
     vel_sp_ENU[0] = vel_track * cos(avoid_angle / 180 * M_PI);
     vel_sp_ENU[1] = vel_track * sin(avoid_angle / 180 * M_PI);
 

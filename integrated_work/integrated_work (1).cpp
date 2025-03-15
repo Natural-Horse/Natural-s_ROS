@@ -79,6 +79,7 @@ float satfunc(float data, float Max);
 void printf();                                                                       //打印函数
 void printf_param();                                                                 //打印各项参数以供检查
 void collision_avoidance(float target_x, float target_y);
+void find_door_center();
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>回 调 函 数<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 //接收雷达的数据，并做相应处理,然后计算前后左右四向最小距离
 void lidar_cb(const sensor_msgs::LaserScan::ConstPtr& scan)
@@ -144,6 +145,7 @@ void pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
     yaw_angle = Euler_fcu[2] / M_PI * 180.0;
 }
+
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>主 函 数<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 int main(int argc, char** argv)
 {
@@ -318,6 +320,15 @@ int main(int argc, char** argv)
     }
     turn_flag = 1;
     printf();
+
+
+    int find_door_count = 0;
+    bool find_door_flag = false;
+    //找门
+    while(ros::ok() && find_door_count < 20){
+        ros::spinOnce();
+        
+    }
     
     
 

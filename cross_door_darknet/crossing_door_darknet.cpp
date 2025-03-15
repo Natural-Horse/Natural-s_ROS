@@ -125,11 +125,11 @@ void lidar_cb(const sensor_msgs::LaserScan::ConstPtr& scan)
         {
             if(i == 0)
             {
-                Laser_tmp.ranges[i] = Laser_tmp.ranges[count-1];
+                Laser_tmp.ranges[i] = 20;
             }
             else
             {
-                Laser_tmp.ranges[i] = Laser_tmp.ranges[i-1];
+                Laser_tmp.ranges[i] = 20;
             }
         }
     
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
     //【订阅】Lidar数据
     ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/scan", 1000, lidar_cb);//dyx
     //ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/lidar2Dscan", 1000, lidar_cb);//dyx
-
+++
     //【订阅】darknet数据
     ros::Subscriber darknet_found_sub = nh.subscribe<std_msgs::Int8>("/darknet_ros/found_object", 1, darknet_found_cb);//dyx
     ros::Subscriber darknet_box_sub = nh.subscribe<darknet_ros_msgs::BoundingBoxes>("/darknet_ros/bounding_boxes", 1, darknet_box_cb);//dyx
